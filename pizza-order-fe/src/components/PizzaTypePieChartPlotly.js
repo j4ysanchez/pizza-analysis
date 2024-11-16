@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import axios from 'axios';
+import ReactPaginate from 'react-paginate';
+import './PizzaTypePieChartPlotly.css'; // Add custom styles if needed
 
 const PizzaTypePieChartPlotly = () => {
     const [data, setData] = useState([]);
     const [selectedData, setSelectedData] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
+    const rowsPerPage = 30;
 
     useEffect(() => {
         axios.get('http://localhost:5000/api/orders')
@@ -30,13 +34,23 @@ const PizzaTypePieChartPlotly = () => {
         axios.get('http://localhost:5000/api/orders')
             .then(response => {
                 const orders = response.data;
-                const segmentData = orders.filter(order => order.pizza_type === clickedSegment).slice(0, 30);
+                const segmentData = orders.filter(order => order.pizza_type === clickedSegment);
                 setSelectedData(segmentData);
+                setCurrentPage(0); // Reset to the first page
             })
             .catch(error => {
                 console.error('There was an error fetching the pizza orders!', error);
             });
     };
+
+    const handlePageChange = ({ selected }) => {
+        setCurrentPage(selected);
+    };
+
+    const indexOfLastRow = (currentPage + 1) * rowsPerPage;
+    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
+    const currentRows = selectedData.slice(indexOfFirstRow, indexOfLastRow);
+    const pageCount = Math.ceil(selectedData.length / rowsPerPage);
 
     return (
         <div>
@@ -72,7 +86,7 @@ const PizzaTypePieChartPlotly = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {selectedData.map((row, index) => (
+                            {currentRows.map((row, index) => (
                                 <tr key={index}>
                                     <td>{row.id}</td>
                                     <td>{row.pizza_type}</td>
@@ -81,6 +95,19 @@ const PizzaTypePieChartPlotly = () => {
                             ))}
                         </tbody>
                     </table>
+                    <ReactPaginate
+                        previousLabel={'previous'}
+                        nextLabel={'next'}
+                        breakLabel={'...'}
+                        breakClassName={'break-me'}
+                        pageCount={pageCount}
+                        marginPagesDisplayed={2}
+                        pageRangeDisplayed={5}
+                        onPageChange={handlePageChange}
+                        containerClassName={'pagination'}
+                        subContainerClassName={'pages pagination'}
+                        activeClassName={'active'}
+                    />
                 </div>
             )}
         </div>
