@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17.1
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: pizza_admin
+      POSTGRES_PASSWORD: i<3pizza
+      POSTGRES_DB: pizza_orders
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
