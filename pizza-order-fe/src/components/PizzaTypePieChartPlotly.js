@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import axios from 'axios';
 import ReactPaginate from 'react-paginate';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination } from '@mui/material';
 import './PizzaTypePieChartPlotly.css'; // Add custom styles if needed
 
 const PizzaTypePieChartPlotly = () => {
@@ -43,8 +44,8 @@ const PizzaTypePieChartPlotly = () => {
             });
     };
 
-    const handlePageChange = ({ selected }) => {
-        setCurrentPage(selected);
+    const handlePageChange = (event, value) => {
+        setCurrentPage(value - 1);
     };
 
     const indexOfLastRow = (currentPage + 1) * rowsPerPage;
@@ -77,36 +78,33 @@ const PizzaTypePieChartPlotly = () => {
             {selectedData.length > 0 && (
                 <div>
                     <h2>Selected Segment Data</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Pizza Type</th>
-                                <th>Time Ordered</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {currentRows.map((row, index) => (
-                                <tr key={index}>
-                                    <td>{row.id}</td>
-                                    <td>{row.pizza_type}</td>
-                                    <td>{new Date(row.order_timestamp).toLocaleString()}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <ReactPaginate
-                        previousLabel={'previous'}
-                        nextLabel={'next'}
-                        breakLabel={'...'}
-                        breakClassName={'break-me'}
-                        pageCount={pageCount}
-                        marginPagesDisplayed={2}
-                        pageRangeDisplayed={5}
-                        onPageChange={handlePageChange}
-                        containerClassName={'pagination'}
-                        subContainerClassName={'pages pagination'}
-                        activeClassName={'active'}
+                    <TableContainer component={Paper}>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Order ID</TableCell>
+                                    <TableCell>Pizza Type</TableCell>
+                                    <TableCell>Time Ordered</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {currentRows.map((row, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{row.id}</TableCell>
+                                        <TableCell>{row.pizza_type}</TableCell>
+                                        <TableCell>{new Date(row.order_timestamp).toLocaleString()}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                    <Pagination
+                        count={pageCount}
+                        page={currentPage + 1}
+                        onChange={handlePageChange}
+                        color="primary"
+                        showFirstButton
+                        showLastButton
                     />
                 </div>
             )}
