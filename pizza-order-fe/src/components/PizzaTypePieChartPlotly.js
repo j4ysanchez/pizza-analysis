@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import axios from 'axios';
-import ReactPaginate from 'react-paginate';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination } from '@mui/material';
-import './PizzaTypePieChartPlotly.css'; // Add custom styles if needed
+import { Table, Pagination } from 'antd';
+// import 'antd/dist/antd.css'; // Import Ant Design styles
+import { StyleProvider } from '@ant-design/cssinjs';
 
 const PizzaTypePieChartPlotly = () => {
     const [data, setData] = useState([]);
     const [selectedData, setSelectedData] = useState([]);
-    const [currentPage, setCurrentPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 30;
 
     useEffect(() => {
@@ -37,21 +37,40 @@ const PizzaTypePieChartPlotly = () => {
                 const orders = response.data;
                 const segmentData = orders.filter(order => order.pizza_type === clickedSegment);
                 setSelectedData(segmentData);
-                setCurrentPage(0); // Reset to the first page
+                setCurrentPage(1); // Reset to the first page
             })
             .catch(error => {
                 console.error('There was an error fetching the pizza orders!', error);
             });
     };
 
-    const handlePageChange = (event, value) => {
-        setCurrentPage(value - 1);
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
     };
 
-    const indexOfLastRow = (currentPage + 1) * rowsPerPage;
+    const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
     const currentRows = selectedData.slice(indexOfFirstRow, indexOfLastRow);
     const pageCount = Math.ceil(selectedData.length / rowsPerPage);
+
+    const columns = [
+        {
+            title: 'Order ID',
+            dataIndex: 'id',
+            key: 'id',
+        },
+        {
+            title: 'Pizza Type',
+            dataIndex: 'pizza_type',
+            key: 'pizza_type',
+        },
+        {
+            title: 'Time Ordered',
+            dataIndex: 'order_timestamp',
+            key: 'order_timestamp',
+            render: (text) => new Date(text).toLocaleString(),
+        },
+    ];
 
     return (
         <div>
@@ -78,33 +97,18 @@ const PizzaTypePieChartPlotly = () => {
             {selectedData.length > 0 && (
                 <div>
                     <h2>Selected Segment Data</h2>
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>Order ID</TableCell>
-                                    <TableCell>Pizza Type</TableCell>
-                                    <TableCell>Time Ordered</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {currentRows.map((row, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell>{row.id}</TableCell>
-                                        <TableCell>{row.pizza_type}</TableCell>
-                                        <TableCell>{new Date(row.order_timestamp).toLocaleString()}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                    <Table
+                        dataSource={currentRows}
+                        columns={columns}
+                        pagination={false}
+                        rowKey="id"
+                    />
                     <Pagination
-                        count={pageCount}
-                        page={currentPage + 1}
+                        current={currentPage}
+                        total={selectedData.length}
+                        pageSize={rowsPerPage}
                         onChange={handlePageChange}
-                        color="primary"
-                        showFirstButton
-                        showLastButton
+                        showSizeChanger={false}
                     />
                 </div>
             )}
