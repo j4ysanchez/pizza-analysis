@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import PizzaTypePieChart from './components/PizzaTypePieChart';
 import PizzaTypePieChartPlotly from './components/PizzaTypePieChartPlotly';
+import DailyOrdersBarGraph from './components/DailyOrdersBarGraph';
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
       <header className="App-header">
         <PizzaTypePieChart />
         <PizzaTypePieChartPlotly />
+        <DailyOrdersBarGraph />
       </header>
     </div>
   );
