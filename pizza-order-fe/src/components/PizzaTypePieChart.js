@@ -5,17 +5,22 @@ import axios from 'axios';
 const PizzaTypePieChart = () => {
     const [data, setData] = useState([]);
     const chartRef = useRef();
+    const [selectedData, setSelectedData] = useState([]);
+    const [orders, setOrders] = useState([]);
 
     useEffect(() => {
         axios.get('http://localhost:5000/api/orders')
             .then(response => {
-                const orders = response.data;
+                const ordersData = response.data;
+                setOrders(ordersData);
                 const pizzaTypeCounts = d3.rollup(
-                    orders,
+                    ordersData,
                     v => v.length,
                     d => d.pizza_type
                 );
                 const formattedData = Array.from(pizzaTypeCounts, ([type, count]) => ({ type, count }));
+                
+                // console.log(formattedData);
                 setData(formattedData);
             })
             .catch(error => {
@@ -24,7 +29,9 @@ const PizzaTypePieChart = () => {
     }, []);
 
     useEffect(() => {
+
         if (data.length > 0) {
+            
             const drawChart = () => {
                 const width = 500;
                 const height = 500;
@@ -55,18 +62,42 @@ const PizzaTypePieChart = () => {
                     .innerRadius(radius * 1.1)
                     .outerRadius(radius * 1.1);
 
-                svg
-                    .selectAll('path')
-                    .data(data_ready)
-                    .enter()
-                    .append('path')
-                    .attr('d', arc)
-                    .attr('fill', d => color(d.data.type))
-                    .attr('stroke', 'white')
-                    .style('stroke-width', '2px')
-                    .style('opacity', 0.7);
+                // const path = svg
+                //     .selectAll('path')
+                //     .data(data_ready)
+                //     .enter()
+                //     .append('path')
+                //     .attr('d', arc)
+                //     .attr('fill', d => color(d.data.type))
+                //     .attr('stroke', 'white')
+                //     .style('stroke-width', '2px')
+                //     .style('opacity', 0.7);
 
-                // Add labels
+             
+
+
+                const path = svg.selectAll('path')
+                    .data(pie(data))
+                    .enter().append('path')
+                    .attr('d', arc)
+                    .style('fill', (d, i) => d3.schemeCategory10[i % 10])
+                    .on('click', (event, d) => {
+                        console.log('Segment clicked:', d.data.type);
+                        const segmentData = orders.filter(item => item.pizza_type === d.data.type).slice(0, 30);
+                        console.log('Filtered segment data:', segmentData);
+                        setSelectedData(segmentData);
+                    });
+
+                // svg.selectAll('text')
+                //     .data(pie(data))
+                //     .enter().append('text')
+                //     .attr('transform', d => `translate(${arc.centroid(d)})`)
+                //     .attr('dy', '0.35em')
+                //     .text(d => d.data.type)
+                //     .style('text-anchor', 'middle')
+                //     .style('font-size', '12px');
+
+                       // Add labels
                 svg
                     .selectAll('text')
                     .data(data_ready)
@@ -81,12 +112,56 @@ const PizzaTypePieChart = () => {
 
             drawChart();
         }
-    }, [data]);
+    }, [data, orders]);
+
+
+
+    const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+        const options = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+            hour12: true
+        };
+        return date.toLocaleString('en-US', options);
+    };
 
     return (
         <div>
             <h1>Pizza Types Pie Chart</h1>
             <svg ref={chartRef}></svg>
+            {selectedData.length > 0 && (
+                 <div>
+                 <h2>Selected Segment Data</h2>
+                 <table>
+                     <thead>
+                         <tr>
+                             <th>Order ID</th>
+                             <th>Pizza Type</th>
+                             <th>Time Ordered</th>
+                            
+                             {/* Add other relevant columns as needed */}
+                         </tr>
+                     </thead>
+                     <tbody>
+                         {selectedData.map((row, index) => (
+                             <tr key={index}>
+                                 <td>{row.id}</td>
+                                 <td>{row.pizza_type}</td>
+                                 <td>{formatTimestamp(row.order_timestamp)}</td>
+                                 
+                                 {/* Add other relevant data as needed */}
+                             </tr>
+                         ))}
+                     </tbody>
+                 </table>
+             </div>
+            )}
         </div>
     );
 };
