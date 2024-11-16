@@ -36,3 +36,9 @@
     transform: rotate(360deg);
   }
 }
+
+.pie-chart-label {
+  fill: #ffffff; /* Change this to fit the style of your app */
+  font-size: 12px;
+  text-anchor: middle;
+}
