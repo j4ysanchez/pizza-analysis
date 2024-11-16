@@ -9,15 +9,20 @@ const DailyOrdersBarGraph = () => {
         axios.get('http://localhost:5000/api/orders')
             .then(response => {
                 const orders = response.data;
-                const ordersByDay = orders.reduce((acc, order) => {
+                const ordersByDayAndType = orders.reduce((acc, order) => {
                     const date = new Date(order.order_timestamp);
                     const day = date.getDate();
-                    acc[day] = (acc[day] || 0) + 1;
+                    const type = order.pizza_type;
+                    if (!acc[day]) {
+                        acc[day] = {};
+                    }
+                    acc[day][type] = (acc[day][type] || 0) + 1;
                     return acc;
                 }, {});
+
                 const formattedData = Array.from({ length: 31 }, (_, i) => ({
                     day: i + 1,
-                    count: ordersByDay[i + 1] || 0
+                    types: ordersByDayAndType[i + 1] || {}
                 }));
                 setDailyOrders(formattedData);
             })
@@ -27,28 +32,23 @@ const DailyOrdersBarGraph = () => {
     }, []);
 
     const days = dailyOrders.map(d => d.day);
-    const counts = dailyOrders.map(d => d.count);
+    const pizzaTypes = Array.from(new Set(dailyOrders.flatMap(d => Object.keys(d.types))));
+
+    const traces = pizzaTypes.map(type => ({
+        type: 'bar',
+        name: type,
+        x: days,
+        y: dailyOrders.map(d => d.types[type] || 0),
+    }));
 
     return (
         <div>
             <h1>Daily Orders Bar Graph</h1>
             <Plot
-                data={[
-                    {
-                        type: 'bar',
-                        x: days,
-                        y: counts,
-                        marker: {
-                            color: 'rgba(55, 128, 191, 0.7)',
-                            line: {
-                                color: 'rgba(55, 128, 191, 1.0)',
-                                width: 2
-                            }
-                        }
-                    }
-                ]}
+                data={traces}
                 layout={{
                     title: 'Number of Orders for Each Day of the Month',
+                    barmode: 'stack',
                     xaxis: {
                         title: 'Day of the Month',
                         dtick: 1
