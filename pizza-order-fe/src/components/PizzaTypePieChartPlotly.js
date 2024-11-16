@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const PizzaTypePieChartPlotly = () => {
     const [data, setData] = useState([]);
+    const [selectedData, setSelectedData] = useState([]);
 
     useEffect(() => {
         axios.get('http://localhost:5000/api/orders')
@@ -23,6 +24,19 @@ const PizzaTypePieChartPlotly = () => {
 
     const pizzaTypes = data.map(d => d.type);
     const pizzaCounts = data.map(d => d.count);
+
+    const handleClick = (event) => {
+        const clickedSegment = event.points[0].label;
+        axios.get('http://localhost:5000/api/orders')
+            .then(response => {
+                const orders = response.data;
+                const segmentData = orders.filter(order => order.pizza_type === clickedSegment).slice(0, 30);
+                setSelectedData(segmentData);
+            })
+            .catch(error => {
+                console.error('There was an error fetching the pizza orders!', error);
+            });
+    };
 
     return (
         <div>
@@ -44,7 +58,31 @@ const PizzaTypePieChartPlotly = () => {
                     margin: { t: 0, b: 0, l: 0, r: 0 },
                     showlegend: false,
                 }}
+                onClick={handleClick}
             />
+            {selectedData.length > 0 && (
+                <div>
+                    <h2>Selected Segment Data</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Pizza Type</th>
+                                <th>Time Ordered</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {selectedData.map((row, index) => (
+                                <tr key={index}>
+                                    <td>{row.id}</td>
+                                    <td>{row.pizza_type}</td>
+                                    <td>{new Date(row.order_timestamp).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };
