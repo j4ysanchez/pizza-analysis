@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,15 +28,37 @@ def get_db_connection():
         raise HTTPException(status_code=500, detail="Database connection error")
 
 @app.get("/api/orders", response_model=List[Dict])
-async def get_orders(conn=Depends(get_db_connection)):
+async def get_orders(
+    conn=Depends(get_db_connection),
+    limit: int = Query(50, ge=1),
+    offset: int = Query(0, ge=0)
+):
     try:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT * FROM pizza_orders")
+        cursor.execute("SELECT * FROM pizza_orders ORDER BY order_timestamp LIMIT %s OFFSET %s", (limit, offset))
         orders = cursor.fetchall()
         cursor.close()
         return orders
     except psycopg2.Error as e:
         raise HTTPException(status_code=500, detail="Error fetching orders")
+    finally:
+        conn.close()
+
+@app.get("/api/pizza-types", response_model=List[Dict])
+async def get_pizza_types(conn=Depends(get_db_connection)):
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute("""
+            SELECT pizza_type, COUNT(*) as count
+            FROM pizza_orders
+            GROUP BY pizza_type
+            ORDER BY count DESC
+        """)
+        pizza_types = cursor.fetchall()
+        cursor.close()
+        return pizza_types
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail="Error fetching pizza types")
     finally:
         conn.close()
 

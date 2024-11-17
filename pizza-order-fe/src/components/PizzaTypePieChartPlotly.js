@@ -9,7 +9,7 @@ const PizzaTypePieChartPlotly = () => {
     const [data, setData] = useState([]);
     const [selectedData, setSelectedData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const rowsPerPage = 30;
+    const rowsPerPage = 50;
 
     useEffect(() => {
         axios.get('http://localhost:5000/api/orders')
