@@ -11,7 +11,7 @@ const PizzaTypePieChartPlotly = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalOrders, setTotalOrders] = useState(0);
     const [selectedPizzaType, setSelectedPizzaType] = useState(null);
-    const rowsPerPage = 50;
+    const rowsPerPage = 20;
 
     useEffect(() => {
         axios.get('http://localhost:5000/api/pizza-types')
@@ -72,6 +72,7 @@ const PizzaTypePieChartPlotly = () => {
             title: 'Order ID',
             dataIndex: 'id',
             key: 'id',
+            sorter: (a,b) => a.id - b.id,
         },
         {
             title: 'Pizza Type',
@@ -82,6 +83,7 @@ const PizzaTypePieChartPlotly = () => {
             title: 'Time Ordered',
             dataIndex: 'order_timestamp',
             key: 'order_timestamp',
+            sorter: (a, b) => new Date(a.order_timestamp) - new Date(b.order_timestamp), 
             render: (text) => new Date(text).toLocaleString(),
         },
     ];

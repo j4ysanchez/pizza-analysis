@@ -4,12 +4,14 @@ import './App.css';
 import PizzaTypePieChart from './components/PizzaTypePieChart';
 import PizzaTypePieChartPlotly from './components/PizzaTypePieChartPlotly';
 import DailyOrdersBarGraph from './components/DailyOrdersBarGraph';
+import PizzaTypePieChartECharts from './components/PizzaTypePieChartECharts';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <PizzaTypePieChart />
+        {/* <PizzaTypePieChart /> */}
+        <PizzaTypePieChartECharts />
         <PizzaTypePieChartPlotly />
         <DailyOrdersBarGraph />
       </header>
