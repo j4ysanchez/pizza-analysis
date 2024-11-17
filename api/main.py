@@ -31,11 +31,21 @@ def get_db_connection():
 async def get_orders(
     conn=Depends(get_db_connection),
     limit: int = Query(50, ge=1),
-    offset: int = Query(0, ge=0)
+    offset: int = Query(0, ge=0),
+    pizza_type: str = None
 ):
     try:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute("SELECT * FROM pizza_orders ORDER BY order_timestamp LIMIT %s OFFSET %s", (limit, offset))
+        if pizza_type:
+            cursor.execute(
+                "SELECT * FROM pizza_orders WHERE pizza_type = %s ORDER BY order_timestamp LIMIT %s OFFSET %s",
+                (pizza_type, limit, offset)
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM pizza_orders ORDER BY order_timestamp LIMIT %s OFFSET %s",
+                (limit, offset)
+            )
         orders = cursor.fetchall()
         cursor.close()
         return orders

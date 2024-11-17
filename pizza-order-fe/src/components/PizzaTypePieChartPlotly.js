@@ -12,30 +12,25 @@ const PizzaTypePieChartPlotly = () => {
     const rowsPerPage = 50;
 
     useEffect(() => {
-        axios.get('http://localhost:5000/api/orders')
+        axios.get('http://localhost:5000/api/pizza-types')
             .then(response => {
-                const orders = response.data;
-                const pizzaTypeCounts = orders.reduce((acc, order) => {
-                    acc[order.pizza_type] = (acc[order.pizza_type] || 0) + 1;
-                    return acc;
-                }, {});
-                const formattedData = Object.entries(pizzaTypeCounts).map(([type, count]) => ({ type, count }));
-                setData(formattedData);
+                const pizzaTypesData = response.data;
+                setData(pizzaTypesData);
             })
             .catch(error => {
-                console.error('There was an error fetching the pizza orders!', error);
+                console.error('There was an error fetching the pizza types!', error);
             });
     }, []);
 
-    const pizzaTypes = data.map(d => d.type);
+
+    const pizzaTypes = data.map(d => d.pizza_type);
     const pizzaCounts = data.map(d => d.count);
 
     const handleClick = (event) => {
         const clickedSegment = event.points[0].label;
-        axios.get('http://localhost:5000/api/orders')
+        axios.get(`http://localhost:5000/api/orders?pizza_type=${clickedSegment}`)
             .then(response => {
-                const orders = response.data;
-                const segmentData = orders.filter(order => order.pizza_type === clickedSegment);
+                const segmentData = response.data;
                 setSelectedData(segmentData);
                 setCurrentPage(1); // Reset to the first page
             })
@@ -51,7 +46,7 @@ const PizzaTypePieChartPlotly = () => {
     const indexOfLastRow = currentPage * rowsPerPage;
     const indexOfFirstRow = indexOfLastRow - rowsPerPage;
     const currentRows = selectedData.slice(indexOfFirstRow, indexOfLastRow);
-    const pageCount = Math.ceil(selectedData.length / rowsPerPage);
+
 
     const columns = [
         {
