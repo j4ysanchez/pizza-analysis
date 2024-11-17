@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, Response
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +12,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["x-total-count"],  # Expose the custom header
 )
 
 def get_db_connection():
@@ -29,6 +30,7 @@ def get_db_connection():
 
 @app.get("/api/orders", response_model=List[Dict])
 async def get_orders(
+    response: Response,
     conn=Depends(get_db_connection),
     limit: int = Query(50, ge=1),
     offset: int = Query(0, ge=0),
@@ -38,16 +40,24 @@ async def get_orders(
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         if pizza_type:
             cursor.execute(
+                "SELECT COUNT(*) FROM pizza_orders WHERE pizza_type = %s",
+                (pizza_type,)
+            )
+            total_count = cursor.fetchone()['count']
+            cursor.execute(
                 "SELECT * FROM pizza_orders WHERE pizza_type = %s ORDER BY order_timestamp LIMIT %s OFFSET %s",
                 (pizza_type, limit, offset)
             )
         else:
+            cursor.execute("SELECT COUNT(*) FROM pizza_orders")
+            total_count = cursor.fetchone()['count']
             cursor.execute(
                 "SELECT * FROM pizza_orders ORDER BY order_timestamp LIMIT %s OFFSET %s",
                 (limit, offset)
             )
         orders = cursor.fetchall()
         cursor.close()
+        response.headers['x-total-count'] = str(total_count)
         return orders
     except psycopg2.Error as e:
         raise HTTPException(status_code=500, detail="Error fetching orders")

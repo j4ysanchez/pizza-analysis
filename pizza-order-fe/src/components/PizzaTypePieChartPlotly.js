@@ -9,6 +9,8 @@ const PizzaTypePieChartPlotly = () => {
     const [data, setData] = useState([]);
     const [selectedData, setSelectedData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalOrders, setTotalOrders] = useState(0);
+    const [selectedPizzaType, setSelectedPizzaType] = useState(null);
     const rowsPerPage = 50;
 
     useEffect(() => {
@@ -26,13 +28,33 @@ const PizzaTypePieChartPlotly = () => {
     const pizzaTypes = data.map(d => d.pizza_type);
     const pizzaCounts = data.map(d => d.count);
 
+    const fetchOrders = (pizzaType, page) => {
+        const offset = (page - 1) * rowsPerPage;
+        axios.get(`http://localhost:5000/api/orders?pizza_type=${pizzaType}&limit=${rowsPerPage}&offset=${offset}`)
+            .then(response => {
+                setSelectedData(response.data);
+                setCurrentPage(page);
+                const totalCount = response.headers['x-total-count'];
+                if (totalCount) {
+                    setTotalOrders(parseInt(totalCount, 10)); // Ensure totalOrders is updated
+                } else {
+                    console.error('x-total-count header is missing');
+                }
+            })
+            .catch(error => {
+                console.error('There was an error fetching the pizza orders!', error);
+            });
+    };
+
     const handleClick = (event) => {
         const clickedSegment = event.points[0].label;
-        axios.get(`http://localhost:5000/api/orders?pizza_type=${clickedSegment}`)
+        setSelectedPizzaType(clickedSegment);
+        axios.get(`http://localhost:5000/api/orders?pizza_type=${clickedSegment}&limit=${rowsPerPage}&offset=0`)
             .then(response => {
-                const segmentData = response.data;
-                setSelectedData(segmentData);
+                setSelectedData(response.data);
                 setCurrentPage(1); // Reset to the first page
+                setTotalOrders(parseInt(response.headers['x-total-count'], 10)); // Ensure totalOrders is updated
+                console.log(response.headers);
             })
             .catch(error => {
                 console.error('There was an error fetching the pizza orders!', error);
@@ -40,13 +62,10 @@ const PizzaTypePieChartPlotly = () => {
     };
 
     const handlePageChange = (page) => {
-        setCurrentPage(page);
+        if (selectedPizzaType) {
+            fetchOrders(selectedPizzaType, page);
+        }
     };
-
-    const indexOfLastRow = currentPage * rowsPerPage;
-    const indexOfFirstRow = indexOfLastRow - rowsPerPage;
-    const currentRows = selectedData.slice(indexOfFirstRow, indexOfLastRow);
-
 
     const columns = [
         {
@@ -93,14 +112,14 @@ const PizzaTypePieChartPlotly = () => {
                 <div>
                     <h2>Selected Segment Data</h2>
                     <Table
-                        dataSource={currentRows}
+                        dataSource={selectedData}
                         columns={columns}
                         pagination={false}
                         rowKey="id"
                     />
                     <Pagination
                         current={currentPage}
-                        total={selectedData.length}
+                        total={totalOrders}
                         pageSize={rowsPerPage}
                         onChange={handlePageChange}
                         showSizeChanger={false}
